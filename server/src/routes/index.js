@@ -1,0 +1,18 @@
+import express from 'express';
+import movieRouter from "../modules/movie/movie.route.js";
+import theaterRouter from "../modules/theater/theater.routes.js";
+import showRouter from "../modules/show/show.routes.js";
+import userRouter from "../modules/user/user.route.js";
+import authRouter from "../modules/auth/auth.route.js";
+import paymentRouter from "../modules/payment/payment.route.js";
+import bookingRouter from "../modules/booking/booking.route.js";
+
+const router = express.Router();
+router.use("/movies", movieRouter);
+router.use("/theaters", theaterRouter);
+router.use("/shows", showRouter);
+router.use("/payment", paymentRouter);
+router.use("/users", userRouter);
+router.use("/auth", authRouter);
+router.use("/book", bookingRouter);
+export default router;

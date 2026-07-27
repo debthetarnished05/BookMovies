@@ -1,0 +1,38 @@
+import { Server } from "socket.io";
+import {app} from "./app.js";
+import connectDB from "./config/db.js";
+import config from "./config/config.js";
+
+import "./config/redis.js";
+import http from "http";
+import { registerSocketHandlers } from "./socket/sockethandlers.js";
+
+const startServer = async () => {
+
+  // Connect to MongoDB
+  await connectDB();
+
+  const httpServer = http.createServer(app);
+
+  const io = new Server(httpServer, {
+    cors: {
+      origin: "http://localhost:5173",
+      methods: ["GET", "POST"],
+      credentials: true,
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log("A user connected", socket.id);  
+    registerSocketHandlers(socket, io);
+    socket.on("disconnect", (reason) => {
+      console.log("A user disconnected", socket.id,"Reason:", reason);
+    });
+  });
+
+  httpServer.listen(config.port, () => {
+    console.log(`Server is running on http://localhost:${config.port}`);
+  });
+};
+
+startServer();
