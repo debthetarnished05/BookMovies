@@ -16,7 +16,7 @@ const startServer = async () => {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: "https://bookmovies-frontend.vercel.app/",
+      origin: "https://bookmovies-frontend.vercel.app",
       methods: ["GET", "POST"],
       credentials: true,
     },
