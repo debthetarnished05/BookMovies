@@ -72,6 +72,8 @@ const SeatLayout = () => {
 
   useEffect(() => {
     setSelectedSeats([]);
+
+    socket.connect();
     socket.emit("join-show", {showId});
     socket.on("locked-seats-initials", ({seatIds}) => {
       setLockedSeats(seatIds);
