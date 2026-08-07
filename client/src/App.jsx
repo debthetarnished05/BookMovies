@@ -55,8 +55,8 @@ function  App() {
             <Route element={<PrivateRoute />}>
               <Route path="/movies/:movieId/:movieName/:state/theater/:theaterId/show/:showId/seat-layout" element={<SeatLayout />} />
               <Route path="/profile/:id/:tab" element={<Profile />} />
-              </Route>
-            <Route path="/shows/:showId/:state/checkout" element={<Checkout />} />
+              <Route path="/shows/:showId/:state/checkout" element={<Checkout />} />
+            </Route>
             {/* Add more routes as needed */}
           </Routes>
         </main>

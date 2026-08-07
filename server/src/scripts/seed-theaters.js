@@ -13,6 +13,13 @@ mongoose
   .then(async () => {
     console.log("Connected to MongoDB ✅");
 
+    const existingCount = await TheaterModel.countDocuments();
+    if (existingCount > 0) {
+      console.log("Data already exists, skipping seed");
+      await mongoose.disconnect();
+      process.exit(0);
+    }
+
     const cities = [
       {
         name: "Mumbai",
@@ -155,6 +162,7 @@ mongoose
 
     console.log(`✅ Seeded ${theatres.length} theatres successfully.`);
 
+    await mongoose.disconnect();
     process.exit(0);
   })
   .catch((err) => {

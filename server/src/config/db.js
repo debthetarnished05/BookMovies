@@ -3,7 +3,10 @@ import config from "./config.js";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(config.databaseReplicaSet);
+    await mongoose.connect(config.databaseReplicaSet, {
+      maxPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+    });
     console.log("Connected to database");
   } catch (error) {
     console.error("Failed to connect to database:", error);

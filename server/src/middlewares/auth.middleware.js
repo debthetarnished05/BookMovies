@@ -1,18 +1,15 @@
 import createHttpError from "http-errors";
-import * as TokenService from "../modules/auth/token.service.js";
 import * as UserService from "../modules/user/user.service.js";
 
 export const isVerifiedUser = async (req, res, next) => {
   try {
-    const { accessToken } = req.cookies;
+    const userId = req.headers['x-user-id'];
 
-    if (!accessToken) {
-      return next(createHttpError(401, "Access token is missing"));
+    if (!userId) {
+      return next(createHttpError(401, "User ID is missing in headers"));
     }
 
-    const decodedToken = await TokenService.verifyAccessToken(accessToken);
-
-    const user = await UserService.getUserById(decodedToken._id);
+    const user = await UserService.getUserById(userId);
 
     if (!user) {
       return next(createHttpError(404, "User not found"));
@@ -22,6 +19,6 @@ export const isVerifiedUser = async (req, res, next) => {
 
     next();
   } catch (error) {
-    return next(createHttpError(401, "Invalid or expired token"));
+    return next(createHttpError(401, "Invalid User ID"));
   }
-};2
+};

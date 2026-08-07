@@ -31,6 +31,12 @@ function loadScript(src) {
 }
 
 const Checkout = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { location } = useLocation();
+  const { selectedSeats, shows: showData } = useSeatContext();
+  const { base, tax, total } = calculateTotalPrice(selectedSeats);
+
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes = 300 seconds
   useEffect(() => {
 
@@ -39,10 +45,12 @@ const Checkout = () => {
           if(prev <= 1){
             clearInterval(interval);
 
-            socket.emit("unlock-seats", {
-              showId: showData._id,
-              userId: user._id
-            })
+            if (showData?._id && user?._id) {
+              socket.emit("unlock-seats", {
+                showId: showData._id,
+                userId: user._id
+              })
+            }
 
             toast.error("Time expired!")
             navigate("/");
@@ -56,13 +64,7 @@ const Checkout = () => {
 
     return () => clearInterval(interval) // cleanup
 
-  }, [])
-
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { location } = useLocation();
-  const { selectedSeats, shows: showData } = useSeatContext();
-  const { base, tax, total } = calculateTotalPrice(selectedSeats);
+  }, [showData?._id, user?._id, navigate])
 
   useEffect(() => {
     console.log(showData)

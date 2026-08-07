@@ -37,7 +37,7 @@ const Seat = ({ seat, row, selectedSeats, lockedSeats , onClick }) => {
 
 const SeatLayout = () => {
 
-  const [lockedSeats, setLockedSeats] = useState();
+  const [lockedSeats, setLockedSeats] = useState([]);
   const { selectedSeats, setSelectedSeats } = useSeatContext();
   const { location } = useLocation();
 
@@ -91,11 +91,18 @@ const SeatLayout = () => {
       setLockedSeats((prev) => prev.filter((id) => !seatIds.includes(id)));
     })
 
-    socket.on("seat-locked-failed", ({showId,
+    socket.on("seat-lock-failed", ({showId,
         requested: seatIds,
         alreadyLocked,}) => {
           toast.error(`Some seats are already locked: ${alreadyLocked.join(", ")}`)
         })
+
+    return () => {
+      socket.off("locked-seats-initials");
+      socket.off("seat-locked");
+      socket.off("seat-unlocked");
+      socket.off("seat-lock-failed");
+    }
 
   },[showId])
 

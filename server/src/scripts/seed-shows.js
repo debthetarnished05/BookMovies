@@ -91,6 +91,14 @@ mongoose
   .then(async () => {
     console.log("✅ DB connected");
 
+    const todayStr = dayjs().startOf("day").format("DD-MM-YYYY");
+    const count = await ShowModel.countDocuments({ date: todayStr });
+    if (count > 0) {
+      console.log("Data already exists, skipping seed");
+      await mongoose.disconnect();
+      process.exit(0);
+    }
+
     await ShowModel.deleteMany({});
     console.log("🧹 Existing shows deleted.");
 

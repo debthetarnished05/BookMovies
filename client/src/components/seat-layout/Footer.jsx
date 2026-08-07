@@ -10,16 +10,20 @@ const Footer = ({ isSelected, selectedSeats, showData, state }) => {
   const { user } = useAuth();
 
   const handleNavigateToCheckout = () => {
-
-    // send lock request to socket.io server
+    // send lock request to socket.io server and wait for acknowledgment
     socket.emit("lock-seats", {
       showId: showData._id,
       seatIds: selectedSeats,
       userId: user._id
-    })
-
-    navigate(`/shows/${showData._id}/${state}/checkout`);
-    setShows(showData);
+    }, (response) => {
+      if (response && response.success) {
+        setShows(showData);
+        navigate(`/shows/${showData._id}/${state}/checkout`);
+      } else {
+        // Handle failure (the toast will already be shown by SeatLayout, but we can clear selection or just stop)
+        console.error("Failed to lock seats:", response?.unavailableSeats);
+      }
+    });
   }
 
   return (

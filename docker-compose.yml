@@ -73,6 +73,8 @@ services:
 
     env_file:
       - ./server/.env  
+    environment:
+      - NODE_ENV=production
 
     depends_on: 
       mongo-init:

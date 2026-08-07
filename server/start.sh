@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+export NODE_ENV=production
+
 echo "Running startup scripts..."
 
 npm run seed:theaters

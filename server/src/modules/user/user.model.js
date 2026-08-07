@@ -10,17 +10,20 @@ const userSchema = new Schema(
       required: true,
       unique: true,
     },
+    password: {
+      type: String,
+    },
     role: {
       type: String,
       enum: ["admin", "user"],
       default: "user",
     },
     phone: {
-      type: Number,
+      type: String, // Changed to String to accommodate different formats
     },
     activateUser: {
       type: Boolean,
-      default: false,
+      default: true, // Auto-activate since we get everything upfront
     },
   },
   {

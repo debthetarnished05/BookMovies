@@ -1,37 +1,28 @@
-import { useContext, createContext } from "react";
-import { useState } from "react";
+import { useContext, createContext, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { sendOTP, verifyOTP, activate, logout } from "../apis";
+import { registerUser, loginUser, logout } from "../apis";
 import { toast } from "react-hot-toast";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
     const [step, setStep] = useState(1);
     const [showModal , setShowModal] = useState(false);
     const [user, setUser] = useState(null);
-    const [interval, setInterval] = useState(null);
-    const [authData, setAuthData] = useState();
     const [auth, setAuth] = useState(false);
 
     // Mutations
-    const sendOtpRequestMutation = useMutation({
-        mutationFn : (email) => sendOTP({email}),
+    const registerMutation = useMutation({
+        mutationFn : (data) => registerUser(data),
     })
 
-    const verifyOtpRequestMutation = useMutation({
-        mutationFn : (reqData) => verifyOTP(reqData),
-    })
-
-    const activateUserMutation = useMutation({
-        mutationFn : (reqData) => activate(reqData),
+    const loginMutation = useMutation({
+        mutationFn : (data) => loginUser(data),
     })
 
     const logOutMutation = useMutation({
         mutationFn : () => logout(),
     })
-
 
     const toggleModal = () => {
         setShowModal(!showModal)
@@ -40,85 +31,64 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    const sendOtpRequest = async ({email, onNext, setLoading}) => {
-        sendOtpRequestMutation.mutate(email, {
+    const registerRequest = async (data) => {
+        registerMutation.mutate(data, {
             onSuccess : (res) => {
-                console.log(res.data);
-                setAuthData(res.data);
-                toast.success("OTP sent to your email");
-                onNext();
-            },
-            onError : (err) => {
-                console.log(err);
-                toast.error(err?.response?.error?.message || "Something went wrong");
-            }
-        })
-        
-    }
-
-    const verifyOtpRequest = async (otp, onNext) => {
-        const { hash, email } = authData;
-        const reqData = {otp, hash, email};
-
-        verifyOtpRequestMutation.mutate(reqData, {
-            onSuccess : (res) => {
-                setAuthData(null);
                 setUser(res.data.user);
                 setAuth(true);
-                if(!res.data.user?.activateUser){
-                    onNext();
-                }else{
-                    setStep(1);
-                    toggleModal();
-                }
-            },
-            onError : (err) => {
-                console.log(err);
-                toast.error(err?.response?.error?.message || "Something went wrong");
-            }
-        })
-    }
-
-    const activateUserRequest = async (data) => {
-        const { name, phone } = data;
-        const id = user?._id;
-        const reqData = { id, name, phone };
-
-        activateUserMutation.mutate(reqData, {
-            onSuccess : (res) => {
-                console.log(res);
-                setUser(res.data);
-                setStep(1);
+                localStorage.setItem("userId", res.data.user._id);
+                toast.success("Account created successfully!");
                 toggleModal();
             },
             onError : (err) => {
-                console.log(err);
-                toast.error(err?.response?.error?.message || "Something went wrong");
+                toast.error(err?.response?.data?.message || "Something went wrong");
             }
         })
-    };
+    }
+
+    const loginRequest = async (data) => {
+        loginMutation.mutate(data, {
+            onSuccess : (res) => {
+                setUser(res.data.user);
+                setAuth(true);
+                localStorage.setItem("userId", res.data.user._id);
+                toast.success("Logged in successfully!");
+                toggleModal();
+            },
+            onError : (err) => {
+                toast.error(err?.response?.data?.message || "Invalid credentials");
+            }
+        })
+    }
 
     const logoutRequest = () => {
         logOutMutation.mutate(null, {
-            onSuccess: (data) => {
-            console.log(data);
-            setAuth(false);
-            setUser(null);
-            window.location.href = "/" 
-        },
+            onSuccess: () => {
+                setAuth(false);
+                setUser(null);
+                localStorage.removeItem("userId");
+                window.location.href = "/";
+            },
             onError: (error) => {
-            console.log(error);
-            toast.error(error?.response?.error?.message || "Something went wrong");
-        },
+                toast.error(error?.response?.data?.message || "Something went wrong");
+            },
         })
     }
 
     return (
-        <AuthContext.Provider value={{ step, setStep, showModal, toggleModal, sendOtpRequest, authData, user, setUser ,verifyOtpRequest, activateUserRequest, logoutRequest, auth, setAuth, otpLoader:sendOtpRequestMutation.isPending, verifyOtpLoader: verifyOtpRequestMutation.isPending, activateUserLoader: activateUserMutation.isPending }}>
+        <AuthContext.Provider value={{ 
+            step, setStep, 
+            showModal, toggleModal, 
+            user, setUser, 
+            auth, setAuth,
+            registerRequest, 
+            loginRequest, 
+            logoutRequest, 
+            isAuthLoading: registerMutation.isPending || loginMutation.isPending 
+        }}>
             {children}
         </AuthContext.Provider>
     )
-
 }
 
 export const useAuth = () => useContext(AuthContext);

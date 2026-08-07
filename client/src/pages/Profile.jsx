@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 const Profile = () => {
 
   const { tab } = useParams();
+  const [activeTab, setActiveTab] = React.useState("profile");
 
   useEffect(() => {
     if(tab && tabs.includes(tab)) {
@@ -16,7 +17,6 @@ const Profile = () => {
     }
   },[tab])
 
-  const [activeTab, setActiveTab] = React.useState("profile");
   const { user, logoutRequest } = useAuth();
 
   const handleLogout = () => {

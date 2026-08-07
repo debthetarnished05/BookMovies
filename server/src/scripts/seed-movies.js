@@ -152,10 +152,18 @@ const seedMovies = async () => {
     await mongoose.connect(config.databaseReplicaSet);
     console.log("Connected to DB");
 
+    const existingCount = await MovieModel.countDocuments();
+    if (existingCount > 0) {
+      console.log("Data already exists, skipping seed");
+      await mongoose.disconnect();
+      process.exit(0);
+    }
+
     await MovieModel.deleteMany({});
     await MovieModel.insertMany(movies);
 
     console.log("Movies seeded successfully");
+    await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
     console.error("Error seeding movies:", err);

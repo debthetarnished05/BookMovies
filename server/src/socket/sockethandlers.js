@@ -33,8 +33,11 @@ export const registerSocketHandlers = (socket, io) => {
   /**
    * LOCK SEATS
    */
-  socket.on("lock-seats", async ({ showId, seatIds, userId }) => {
-    if (!seatIds || !showId || !userId) return;
+  socket.on("lock-seats", async ({ showId, seatIds, userId }, callback) => {
+    if (!seatIds || !showId || !userId) {
+      if (callback) callback({ success: false, message: "Missing data" });
+      return;
+    }
 
     const lockedSeatsKey = `locked-seats:${showId}`;
     const unavailableSeats = [];
@@ -44,17 +47,19 @@ export const registerSocketHandlers = (socket, io) => {
       const seatLockKey = `seat-lock:${showId}:${seatId}`;
       const existingLock = await redis.get(seatLockKey);
 
-      if (existingLock) {
+      if (existingLock && existingLock !== userId) {
         unavailableSeats.push(seatId);
       }
     }
 
     if (unavailableSeats.length > 0) {
+      // Still emit to the client for the toast notification if needed
       socket.emit("seat-lock-failed", {
         showId,
         requested: seatIds,
         alreadyLocked: unavailableSeats,
       });
+      if (callback) callback({ success: false, unavailableSeats });
       return;
     }
 
@@ -76,6 +81,7 @@ export const registerSocketHandlers = (socket, io) => {
     });
 
     console.log(`✅ ${userId} locked seats:`, seatIds);
+    if (callback) callback({ success: true });
   });
 
   /**
