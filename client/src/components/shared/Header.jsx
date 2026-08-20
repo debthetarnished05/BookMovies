@@ -37,32 +37,44 @@ const Header = () => {
             </div>
           </div>
           {/* Right Part */}
-          <div className="flex item-center space-x-6">
-            <div className="text-sm font-medium cursor-pointer mt-2">
-              {loading && <img src={map} alt="loading..." className="w-10 h-10" />}
-              {location && <p>{location} &nbsp; ▼</p>}
-            </div>
-            {
-              auth ? (
-                  <>
-                    <span className="cursor-pointer text-sm font-medium border rounded-full border-gray-300 p-2">
-                      <FaUser className="text-gray-500" />
-                    </span>
-                    <span onClick={() => navigate(`/profile/${user?._id}/profile`)} className="text-sm -ml-3 font-normal cursor-pointer hover:text-red-500">
-                      Hi, {user ? user?.name : "Test User"} &nbsp; ▼
-                    </span>
-                  </>
-              ) : (
-                <button
-              onClick={() => toggleModal()}
-              className="bg-[#f84464] cursor-pointer
-                    text-white px-4 py-1.5 rounded text-sm"
-            >
-              Sign in
-            </button>
-              )
-            }
-          </div>
+<div className="flex items-center space-x-6">
+  {/* Location */}
+  <div className="text-sm font-medium cursor-pointer">
+    {loading && (
+      <img src={map} alt="loading..." className="w-10 h-10" />
+    )}
+
+    {location && (
+      <p>
+        {location} &nbsp; ▼
+      </p>
+    )}
+  </div>
+
+  {/* User */}
+  {auth ? (
+    <div className="flex items-center gap-3">
+      <span className="w-10 h-10 cursor-pointer border rounded-full border-gray-300 flex items-center justify-center">
+        <FaUser className="text-gray-500" />
+      </span>
+
+      <span
+        onClick={() => navigate(`/profile/${user?._id}/profile`)}
+        className="text-sm font-normal cursor-pointer hover:text-red-500 flex items-center"
+      >
+        Hi, {user ? user.name : "Test User"}
+        <span className="ml-2">▼</span>
+      </span>
+    </div>
+  ) : (
+    <button
+      onClick={() => toggleModal()}
+      className="bg-[#f84464] cursor-pointer text-white px-4 py-1.5 rounded text-sm"
+    >
+      Sign in
+    </button>
+  )}
+</div>
         </div>
       </div>
       {/* Bottom Navbar */}
