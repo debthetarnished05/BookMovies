@@ -26,7 +26,7 @@ A full-stack movie ticket booking application built with the MERN stack (MongoDB
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/debthetarnished05/BookMovies.git
 cd BookMovies
 ```
 
