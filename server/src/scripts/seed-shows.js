@@ -49,7 +49,7 @@ export const seedShow = async () => {
   for (const movie of movies) {
     for (const theatre of theatres) {
       // Generate shows for the next 30 days
-      for (let d = 0; d < 7; d++) {
+      for (let d = 0; d < 3; d++) {
         const showDate = today.add(d, "day");
         const formattedDate = showDate.format("DD-MM-YYYY");
 
