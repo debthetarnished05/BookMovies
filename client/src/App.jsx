@@ -11,7 +11,11 @@ import { Toaster } from "react-hot-toast";
 import { useLoadUser } from "./hooks/useLoadUser";
 import FullScreenLoader from "./components/shared/FullScreenLoader";
 import { useAuth } from "./context/AuthContext";
+import AdminDashboard from "./components/admin/AdminDashboard";
 
+import AdminLayout from "./components/admin/AdminLayout";
+import Dashboard from "./components/admin/superAdminDashboard";
+import AddMovies from "./components/admin/AddMovies";
 
 const PrivateRoute = () => {
   const { auth }  = useAuth();
@@ -27,7 +31,7 @@ function  App() {
   const isSeatLayoutPage = useMatch(
     "/movies/:movieId/:movieName/:state/theater/:theaterId/show/:showId/seat-layout"
   );
-
+  const isAdminPage = useMatch("/admin/*");
   const isCheckoutPage = useMatch("/shows/:showId/:state/checkout");
 
   if(isLoading) {
@@ -45,7 +49,7 @@ function  App() {
         }}
       />
       <div className="flex flex-col min-h-screen">
-        {!isSeatLayoutPage && !isCheckoutPage && <Header />}
+        {!isSeatLayoutPage && !isCheckoutPage && !isAdminPage && <Header />}
         <main className="flex-grow">
           <Routes>
             {/* Define your routes here */}
@@ -57,11 +61,16 @@ function  App() {
               <Route path="/profile/:id/:tab" element={<Profile />} />
               <Route path="/shows/:showId/:state/checkout" element={<Checkout />} />
             </Route>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="add-movies" element={<AddMovies />} />
+            </Route>
             {/* Add more routes as needed */}
           </Routes>
         </main>
-        {!isSeatLayoutPage && !isCheckoutPage && <Footer />}
+        {!isSeatLayoutPage && !isCheckoutPage && !isAdminPage && <Footer />}
       </div>
+      <></>
     </>
   );
 }

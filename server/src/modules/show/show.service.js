@@ -3,11 +3,12 @@ import { generateSeatLayout, groupShowsByTheatreAndMovie } from "../../utils/ind
 import { ShowModel } from "./show.model.js";
 
 // 1. Create Show
-export const createShow = async (showData) => {
+export const createShow = async (showData, adminId) => {
   const seatLayout = generateSeatLayout();
   const showToCreate = {
     ...showData,
     seatLayout,
+    adminId,
   };
 
   return await ShowModel.create(showToCreate);

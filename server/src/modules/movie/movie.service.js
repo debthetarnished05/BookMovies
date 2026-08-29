@@ -1,4 +1,4 @@
-import MovieModel from "./movie.model.js";
+import {MovieModel} from "./movie.model.js";
 
 // Create Movie
 export const createMovie = async (movie) => {

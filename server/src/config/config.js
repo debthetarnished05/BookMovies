@@ -16,6 +16,7 @@ const config = Object.freeze({
   razorpayKey: process.env.RAZORPAY_API_KEY,
   razorpaySecret: process.env.RAZORPAY_SECRET_KEY,
   databaseReplicaSet: process.env.MONGO_REPLICA_STRING,
+  tmdbAccessToken: process.env.TMDB_ACCESS_TOKEN,
 });
 
 export default config;

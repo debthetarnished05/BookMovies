@@ -15,11 +15,11 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "user"],
+      enum: ["admin", "user", "superadmin"],
       default: "user",
     },
     phone: {
-      type: String, // Changed to String to accommodate different formats
+      type: String, 
     },
     activateUser: {
       type: Boolean,

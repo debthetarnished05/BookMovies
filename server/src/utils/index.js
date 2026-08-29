@@ -97,4 +97,4 @@ const nanoid = customAlphabet(
 
 export const generateBookingReference = () => {
   return `BMS-${nanoid()}`;
-};
+};  

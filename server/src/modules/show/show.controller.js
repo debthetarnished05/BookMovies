@@ -3,7 +3,10 @@ import * as ShowService from "./show.service.js";
 // Create Show
 export const createShow = async (req, res, next) => {
   try {
-    const show = await ShowService.createShow(req.body);
+    const show = await ShowService.createShow(
+      req.body,
+      req.user._id
+    );
     res.status(201).json(show);
   } catch (error) {
     next(error);

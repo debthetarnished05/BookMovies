@@ -14,7 +14,7 @@ const TheaterTimings = ({movieId}) => {
 
   const today = dayjs();
   const [selectedDate, setSelectedDate] = useState(today);
-  const formattedDate = selectedDate.format("DD-MM-YYYY");
+  const formattedDate = selectedDate.format("YYYY-MM-DD");
 
   const next7days = Array.from({ length: 7 }, (_, i) => today.add(i, "day"));
 

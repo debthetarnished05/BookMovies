@@ -18,7 +18,17 @@ const MovieCard = ({movie}) => {
     <div onClick={() =>handleNavigate(movie)} className='w-40 md:w-52 cursor-pointer'>
         <img src={movie.posterUrl} alt={movie.title} className='rounded-lg shadow-md' />
         <p className='mt-2 font-medium'>{movie.title}</p>
-        <p className='text-xs text-gray-500'>{movie.rating} | {movie.votes}</p>
+        <div className="flex items-center gap-2 text-sm">
+  <span className="text-red-500 text-lg">★</span>
+        <span className="text-gray-500">
+          {movie.rating?.toFixed(1)}/10 | 
+  
+  
+    {movie.votes >= 1000
+      ? ` ${(movie.votes / 1000).toFixed(1)}K`
+      : movie.votes} Votes
+  </span>
+</div>
         <p className='text-sm text-gray-600'>{movie.age}</p>
         <p className='text-sm text-gray-500 truncate'>{movie.languages.join(" | ")}</p>
     </div>

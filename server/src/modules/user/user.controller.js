@@ -55,3 +55,4 @@ export const activateUser = async (req, res, next) => {
     next(error);
   }
 };
+

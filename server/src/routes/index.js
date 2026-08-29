@@ -6,11 +6,13 @@ import userRouter from "../modules/user/user.route.js";
 import authRouter from "../modules/auth/auth.route.js";
 import paymentRouter from "../modules/payment/payment.route.js";
 import bookingRouter from "../modules/booking/booking.route.js";
+import adminRouter from "../modules/admin/admin.route.js";
 
 const router = express.Router();
 router.use("/movies", movieRouter);
 router.use("/theaters", theaterRouter);
 router.use("/shows", showRouter);
+router.use("/admin", adminRouter);
 router.use("/payment", paymentRouter);
 router.use("/users", userRouter);
 router.use("/auth", authRouter);

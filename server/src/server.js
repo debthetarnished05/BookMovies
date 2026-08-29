@@ -1,11 +1,14 @@
+import dns from "dns";
 import { Server } from "socket.io";
 import {app} from "./app.js";
 import connectDB from "./config/db.js";
 import config from "./config/config.js";
-
 import "./config/redis.js";
 import http from "http";
 import { registerSocketHandlers } from "./socket/sockethandlers.js";
+
+
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const startServer = async () => {
 
