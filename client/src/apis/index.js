@@ -19,6 +19,7 @@ export const getShowById = (data) => axiosWrapper.get(`/shows/${data}`);
 export const registerUser = (data) => axiosWrapper.post("/auth/register", data);
 export const loginUser = (data) => axiosWrapper.post("/auth/login", data);
 export const logout = () => axiosWrapper.post("/auth/logout");
+export const refreshToken = () => axiosWrapper.post("/auth/refresh-token");
 export const getUser = () => axiosWrapper.get("/users/me");
 
 // Payment Endpoints

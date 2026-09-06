@@ -3,7 +3,7 @@
 import mongoose from "mongoose";
 import dayjs from "dayjs";
 
-import MovieModel from "../modules/movie/movie.model.js";
+import { MovieModel } from "../modules/movie/movie.model.js";
 import { TheaterModel } from "../modules/theater/theater.model.js";
 import { ShowModel } from "../modules/show/show.model.js";
 import config from "../config/config.js";

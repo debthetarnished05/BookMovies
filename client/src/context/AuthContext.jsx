@@ -1,4 +1,5 @@
 import { useContext, createContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { registerUser, loginUser, logout } from "../apis";
 import { toast } from "react-hot-toast";
@@ -6,6 +7,7 @@ import { toast } from "react-hot-toast";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [showModal , setShowModal] = useState(false);
     const [user, setUser] = useState(null);
@@ -36,7 +38,7 @@ export const AuthProvider = ({ children }) => {
             onSuccess : (res) => {
                 setUser(res.data.user);
                 setAuth(true);
-                localStorage.setItem("userId", res.data.user._id);
+                localStorage.setItem("accessToken", res.data.accessToken);
                 toast.success("Account created successfully!");
                 toggleModal();
             },
@@ -51,7 +53,7 @@ export const AuthProvider = ({ children }) => {
             onSuccess : (res) => {
                 setUser(res.data.user);
                 setAuth(true);
-                localStorage.setItem("userId", res.data.user._id);
+                localStorage.setItem("accessToken", res.data.accessToken);
                 toast.success("Logged in successfully!");
                 toggleModal();
             },
@@ -66,8 +68,8 @@ export const AuthProvider = ({ children }) => {
             onSuccess: () => {
                 setAuth(false);
                 setUser(null);
-                localStorage.removeItem("userId");
-                window.location.href = "/";
+                localStorage.removeItem("accessToken");
+                navigate("/");
             },
             onError: (error) => {
                 toast.error(error?.response?.data?.message || "Something went wrong");
