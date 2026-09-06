@@ -63,4 +63,4 @@ export const updateRefreshToken = async (userId, newToken) => {
   } catch (error) {
     throw error;
   }
-};
+}; 

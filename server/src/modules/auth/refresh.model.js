@@ -19,5 +19,5 @@ const refreshTokenSchema = new mongoose.Schema(
 
 export const RefreshTokenModel = mongoose.model(
   "RefreshTokenModel",
-  refreshTokenSchema
+  refreshTokenSchema 
 );
