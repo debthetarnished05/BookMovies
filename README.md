@@ -1,126 +1,406 @@
-# BookMovies 🎬🍿
+## 🐳☁️ Render + Upstash + MongoDB Atlas Deployment Guide
 
-A full-stack movie ticket booking application built with the MERN stack (MongoDB, Express, React, Node.js), Redis, and Socket.io for real-time seat availability and updates. 
+This section explains how to deploy the BookMovies backend using **Render**, **MongoDB Atlas**, and **Upstash Redis**, while deploying the frontend separately on **Vercel**.
 
-## 🚀 Features
-- **User Authentication:** Secure JWT-based authentication.
-- **Browse & Book Movies:** View theaters, movies, and upcoming shows. Book tickets seamlessly.
-- **Real-Time Updates:** Live seat availability updates using Socket.io to prevent double-booking.
-- **Payment Integration:** Secure payments via Razorpay.
-- **Email Notifications:** Booking confirmations sent via email using Nodemailer & MJML.
-- **Caching:** Redis for optimized data retrieval and performance.
+### Architecture
 
-## 💻 Tech Stack
-- **Frontend (Client):** React, Vite, TailwindCSS, React Query, React Router, Socket.io-client
-- **Backend (Server):** Node.js, Express, MongoDB (Mongoose), Redis, Socket.io, Razorpay, JWT
-- **Infrastructure:** Docker, Docker Compose, AWS EC2, Vercel
+```text
+                    ┌──────────────────┐
+                    │      Vercel      │
+                    │  React Frontend  │
+                    └────────┬─────────┘
+                             │
+                             │ HTTPS API
+                             ▼
+                    ┌──────────────────┐
+                    │      Render      │
+                    │ Node + Express   │
+                    │     Socket.IO    │
+                    └───────┬──────────┘
+                            │
+                 ┌──────────┴──────────┐
+                 ▼                     ▼
+        ┌─────────────────┐   ┌─────────────────┐
+        │ MongoDB Atlas   │   │  Upstash Redis  │
+        │ Persistent DB   │   │ Cache / Locks   │
+        └─────────────────┘   └─────────────────┘
+
+                    ┌─────────────────┐
+                    │     Razorpay    │
+                    │    Payments     │
+                    └─────────────────┘
+```
 
 ---
 
-## 🛠️ Local Development Setup
+### Step 1: Create MongoDB Atlas Database
 
-### Prerequisites
-- Node.js (v18+)
-- Docker & Docker Compose (optional but recommended for running Redis/Mongo easily)
-- MongoDB & Redis (if running locally without Docker)
+1. Create an account on **MongoDB Atlas**.
+2. Create a new cluster.
+3. Create a database user with a username and password.
+4. Configure the network access settings to allow your Render service to connect.
+5. Copy the MongoDB connection string.
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/debthetarnished05/BookMovies.git
-cd BookMovies
+It will look similar to:
+
+```env
+MONGO_CONNECTION_STRING=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority
 ```
 
-### 2. Backend Setup
+Make sure the database name matches the one expected by your application.
+
+---
+
+### Step 2: Configure Upstash Redis
+
+1. Create an account on **Upstash**.
+2. Create a Redis database.
+3. Select a region close to your application/users.
+4. Copy the Redis connection details provided by Upstash.
+
+Depending on how Redis is initialized in the application, your environment variables may look like:
+
+```env
+REDIS_HOST=<upstash-redis-host>
+REDIS_PORT=6379
+REDIS_PASSWORD=<upstash-redis-password>
+```
+
+If your application uses an Upstash Redis URL instead, configure the variable expected by your Redis client, for example:
+
+```env
+REDIS_URL=rediss://:<password>@<host>:6379
+```
+
+Use the exact variable names and connection format expected by your backend code.
+
+---
+
+### Step 3: Prepare the Backend
+
+Make sure the backend can start using the production environment variables.
+
+Inside the `server` directory:
+
 ```bash
-cd server
 npm install
 ```
-- Create a `.env` file in the `server` directory (refer to `.env.example` if available). 
-- Ensure variables like `MONGO_CONNECTION_STRING`, `REDIS_HOST`, and `RAZORPAY_API_KEY` are properly set.
-- Run the server:
-```bash
-npm run dev
-```
-*(Optionally, you can run the `seed:theaters`, `seed:movies`, and `seed:shows` scripts from `package.json` to populate your local DB).*
 
-### 3. Frontend Setup
-```bash
-cd client
-npm install
+Check that your `package.json` contains a production start script, for example:
+
+```json
+{
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  }
+}
 ```
-- Create a `.env` file in the `client` directory and set your backend API URL (e.g., `VITE_API_URL=http://localhost:5000/api`).
-- Run the frontend:
+
+Render will use:
+
 ```bash
-npm run dev
+npm start
+```
+
+Your Express server should also listen on the port supplied by Render:
+
+```javascript
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+Do **not** hard-code port `5000` for production.
+
+---
+
+### Step 4: Push the Backend to GitHub
+
+Commit your backend code and push it to GitHub.
+
+Make sure `.env` is included in `.gitignore`:
+
+```gitignore
+.env
+node_modules/
+```
+
+Do **not** commit production credentials such as:
+
+```env
+MONGO_CONNECTION_STRING
+REDIS_PASSWORD
+RAZORPAY_API_KEY
+RAZORPAY_SECRET
+JWT_SECRET
 ```
 
 ---
 
-## 🐳 Docker & AWS Deployment Guide
+### Step 5: Deploy Backend on Render
 
-This section covers the instructions to deploy the backend ecosystem (Node API, MongoDB Replica Set, Redis) to an AWS EC2 instance using Docker Compose, and deploying the frontend to Vercel.
+1. Create an account on Render.
+2. Select **New → Web Service**.
+3. Connect your GitHub repository.
+4. Select the BookMovies repository.
+5. Set the backend root directory to:
 
-### Step 1: Build and Push the Backend Docker Image
-1. Inside the `server` directory, build your Docker image:
-   ```bash
-   cd server
-   docker build -t <your-dockerhub-username>/bookmovies-backend:v1 .
-   ```
-2. Push the built image to Docker Hub:
-   ```bash
-   docker push <your-dockerhub-username>/bookmovies-backend:v1
-   ```
-3. Open `docker-compose.yml` in the root folder and update the `backend` service `image` property to match your newly pushed image.
+```text
+server
+```
 
-### Step 2: AWS EC2 Instance Setup
-1. Log in to AWS and launch a new **Ubuntu EC2 instance**.
-2. Configure the Security Group to allow inbound traffic on:
-   - **Port 22** (SSH)
-   - **Port 5000** (Backend API traffic)
-3. SSH into your EC2 instance:
-   ```bash
-   ssh -i your-key-pair.pem ubuntu@<your-ec2-public-ip>
-   ```
-4. Install Docker and Docker Compose on the EC2 instance:
-   ```bash
-   sudo apt update
-   sudo apt install docker.io docker-compose -y
-   sudo usermod -aG docker $USER
-   # Log out and log back in for group changes to take effect
-   ```
+6. Configure the service.
 
-### Step 3: Deploy Backend on EC2
-1. From your local machine, securely copy the necessary deployment files to your EC2 instance:
-   ```bash
-   # Create a server directory on EC2 to hold the env file
-   ssh -i your-key-pair.pem ubuntu@<your-ec2-public-ip> "mkdir -p ~/server"
+For example:
 
-   # Copy docker-compose.yml to EC2 root
-   scp -i your-key-pair.pem docker-compose.yml ubuntu@<your-ec2-public-ip>:~
+```text
+Runtime: Node
+Build Command: npm install
+Start Command: npm start
+```
 
-   # Copy server/.env to EC2 server directory
-   scp -i your-key-pair.pem server/.env ubuntu@<your-ec2-public-ip>:~/server/.env
-   ```
-2. Ensure the copied `.env` file on EC2 has `FRONTEND_URL` updated to your production frontend domain (once deployed).
-3. SSH back into your EC2 instance and run Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-4. Check the logs to verify everything is running smoothly:
-   ```bash
-   docker-compose logs -f
-   ```
-   *Your Backend API, Redis container, and MongoDB instance (configured as a Replica Set for transactions) should now be live on `http://<your-ec2-public-ip>:5000`.*
+Render will provide a URL similar to:
 
-### Step 4: Frontend Deployment (Vercel)
-1. Since the project includes a `vercel.json` file in the `client` directory, it is optimized for Vercel.
-2. In your `client/.env` (or Vercel Environment Variables dashboard), set your API URL to point to your EC2 backend:
-   ```env
-   VITE_API_URL=http://<your-ec2-public-ip>:5000/api
-   ```
-3. Deploy the `client` directory using the Vercel CLI (`vercel`) or by connecting your GitHub repository to Vercel and setting the root directory to `client`.
+```text
+https://bookmovies-backend.onrender.com
+```
 
 ---
 
-## 📜 License
-This project is licensed under the ISC License.
+### Step 6: Add Environment Variables to Render
+
+Open the Render service's **Environment Variables** section and add the variables required by the backend.
+
+For example:
+
+```env
+NODE_ENV=production
+
+MONGO_CONNECTION_STRING=mongodb+srv://...
+
+REDIS_HOST=...
+REDIS_PORT=6379
+REDIS_PASSWORD=...
+
+JWT_SECRET=...
+
+RAZORPAY_API_KEY=...
+RAZORPAY_SECRET=...
+
+FRONTEND_URL=https://your-frontend.vercel.app
+```
+
+Also add any other variables required by the application, such as email/Nodemailer configuration.
+
+**Never put these production credentials directly in the source code.**
+
+---
+
+### Step 7: MongoDB Atlas Network Access
+
+Render does not have a single permanent IP address that you should rely on for this setup.
+
+Configure MongoDB Atlas Network Access so that the Render service can connect.
+
+For development/testing, you may temporarily allow access from anywhere:
+
+```text
+0.0.0.0/0
+```
+
+However, MongoDB credentials should still be protected with a strong database username and password.
+
+For a production deployment, use the network/security configuration appropriate for your Atlas setup rather than unnecessarily exposing the database.
+
+---
+
+### Step 8: Seed the Database
+
+If the project contains seed scripts for theaters, movies, and shows, you can run them against MongoDB Atlas.
+
+For example:
+
+```bash
+npm run seed:theaters
+npm run seed:movies
+npm run seed:shows
+```
+
+Make sure the commands use the production `MONGO_CONNECTION_STRING`.
+
+---
+
+### Step 9: Deploy the Frontend on Vercel
+
+Deploy the `client` directory to Vercel.
+
+In the Vercel Environment Variables section, configure:
+
+```env
+VITE_API_URL=https://bookmovies-backend.onrender.com/api
+```
+
+If Socket.IO is configured separately, make sure its client-side connection URL also points to the Render backend.
+
+For example:
+
+```javascript
+const socket = io(import.meta.env.VITE_API_URL);
+```
+
+or use the appropriate production backend URL based on your existing Socket.IO configuration.
+
+---
+
+### Step 10: Configure CORS
+
+Since the frontend and backend are deployed on different services:
+
+```text
+Vercel
+   ↓
+Render
+```
+
+the backend must allow requests from the Vercel frontend.
+
+For example:
+
+```javascript
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+  })
+);
+```
+
+Set:
+
+```env
+FRONTEND_URL=https://your-frontend.vercel.app
+```
+
+Do not use `*` when your application requires credentials/cookies.
+
+---
+
+### Step 11: Socket.IO Configuration
+
+BookMovies uses Socket.IO for real-time seat availability.
+
+The production architecture becomes:
+
+```text
+User 1
+   │
+   ▼
+Vercel Frontend
+   │
+   │ WebSocket / HTTPS
+   ▼
+Render Backend
+   │
+   ├──── MongoDB Atlas
+   │
+   └──── Upstash Redis
+```
+
+The frontend should connect to the Render backend rather than:
+
+```text
+localhost:5000
+```
+
+For example:
+
+```env
+VITE_API_URL=https://bookmovies-backend.onrender.com/api
+```
+
+Make sure the Socket.IO server's CORS configuration also permits the Vercel frontend.
+
+---
+
+### Step 12: Production Flow
+
+After deployment, the complete application works like this:
+
+```text
+                 ┌───────────────────┐
+                 │      Vercel       │
+                 │  React + Vite     │
+                 └─────────┬─────────┘
+                           │
+                    HTTPS / Socket.IO
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │      Render       │
+                 │ Node + Express    │
+                 │     Socket.IO     │
+                 └───────┬───────────┘
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+              ▼                     ▼
+      ┌────────────────┐    ┌────────────────┐
+      │ MongoDB Atlas  │    │ Upstash Redis  │
+      │                │    │                │
+      │ Users          │    │ Cache          │
+      │ Movies         │    │ Seat locks     │
+      │ Shows          │    │ Temporary data │
+      │ Bookings       │    │                │
+      └────────────────┘    └────────────────┘
+
+                         │
+                         ▼
+                  ┌──────────────┐
+                  │   Razorpay   │
+                  │   Payments   │
+                  └──────────────┘
+```
+
+### Service Responsibilities
+
+| Service           | Responsibility                                |
+| ----------------- | --------------------------------------------- |
+| **Vercel**        | React frontend hosting                        |
+| **Render**        | Node.js/Express backend + Socket.IO           |
+| **MongoDB Atlas** | Persistent application data                   |
+| **Upstash Redis** | Caching, temporary data, seat-locking support |
+| **Razorpay**      | Payment processing                            |
+| **Nodemailer**    | Booking confirmation emails                   |
+
+---
+
+### Important Production Changes
+
+Before deploying, make sure the application does not contain development-only values such as:
+
+```text
+localhost:5000
+localhost:27017
+localhost:6379
+```
+
+Replace them with environment variables.
+
+For example:
+
+```javascript
+const API_URL = process.env.VITE_API_URL;
+```
+
+and:
+
+```javascript
+const PORT = process.env.PORT || 5000;
+```
+
+The final deployment therefore does **not require Docker or an AWS EC2 server**.
+
+The backend runs on **Render**, persistent application data is stored in **MongoDB Atlas**, Redis is provided by **Upstash**, and the React frontend is hosted on **Vercel**.
