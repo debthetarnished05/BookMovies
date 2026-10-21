@@ -7,12 +7,12 @@ export const isValidEmail = (email) => {
 };
 
 // Generate Seat Layout
-export const generateSeatLayout = () => {
+export const generateSeatLayout = (priceMap = {}) => {
   return [
     {
       row: "E",
       type: "PREMIUM",
-      price: 510,
+      price: priceMap.Premium || 510,
       seats: Array.from({ length: 10 }, (_, i) => ({
         number: i + 1,
         status: "AVAILABLE",
@@ -21,7 +21,7 @@ export const generateSeatLayout = () => {
     {
       row: "D",
       type: "EXECUTIVE",
-      price: 290,
+      price: priceMap.Executive || 290,
       seats: Array.from({ length: 20 }, (_, i) => ({
         number: i + 1,
         status: "AVAILABLE",
@@ -30,7 +30,7 @@ export const generateSeatLayout = () => {
     {
       row: "C",
       type: "EXECUTIVE",
-      price: 290,
+      price: priceMap.Executive || 290,
       seats: Array.from({ length: 20 }, (_, i) => ({
         number: i + 1,
         status: "AVAILABLE",
@@ -39,7 +39,7 @@ export const generateSeatLayout = () => {
     {
       row: "B",
       type: "EXECUTIVE",
-      price: 290,
+      price: priceMap.Executive || 290,
       seats: Array.from({ length: 20 }, (_, i) => ({
         number: i + 1,
         status: "AVAILABLE",
@@ -48,7 +48,7 @@ export const generateSeatLayout = () => {
     {
       row: "A",
       type: "NORMAL",
-      price: 180,
+      price: priceMap.Normal || 180,
       seats: Array.from({ length: 20 }, (_, i) => ({
         number: i + 1,
         status: "AVAILABLE",

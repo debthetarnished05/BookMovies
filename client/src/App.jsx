@@ -16,10 +16,21 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./components/admin/superAdminDashboard";
 import AddMovies from "./components/admin/AddMovies";
+import AdminRequests from "./components/admin/AdminRequests";
+import AddShows from "./components/admin/AddShows";
+import SuperAdminMovieShows from "./components/admin/SuperAdminMovieShows";
+import AdminMovieShows from "./components/admin/AdminMovieShows";
+import AdminShowBookings from "./components/admin/AdminShowBookings";
+import AddShowForm from "./components/admin/AddShowForm";
 
 const PrivateRoute = () => {
   const { auth }  = useAuth();
   return auth ? <Outlet /> : <Navigate to="/" replace />;
+}
+
+const AdminRoute = () => {
+  const { auth, user } = useAuth();
+  return (auth && (user?.role === 'admin' || user?.role === 'superadmin')) ? <Outlet /> : <Navigate to="/" replace />;
 }
 
 function  App() {
@@ -61,9 +72,17 @@ function  App() {
               <Route path="/profile/:id/:tab" element={<Profile />} />
               <Route path="/shows/:showId/:state/checkout" element={<Checkout />} />
             </Route>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="add-movies" element={<AddMovies />} />
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="movies/:movieId/shows" element={<SuperAdminMovieShows />} />
+                <Route path="my-movies/:movieId/shows" element={<AdminMovieShows />} />
+                <Route path="shows/:showId/bookings" element={<AdminShowBookings />} />
+                <Route path="add-movies" element={<AddMovies />} />
+                <Route path="requests" element={<AdminRequests />} />
+                <Route path="add-shows" element={<AddShows />} />
+                <Route path="add-shows/:movieId" element={<AddShowForm />} />
+              </Route>
             </Route>
             {/* Add more routes as needed */}
           </Routes>

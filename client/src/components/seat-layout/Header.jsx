@@ -37,7 +37,7 @@ const Header = ({ showData, type }) => {
                 {showData?.movie.title}
               </h2>
               <p className="text-xs text-gray-500 font-semibold">
-                {dayjs(showData?.date, "DD-MM-YYYY").format("D MMMM YYYY")} &nbsp;
+                {dayjs(showData?.date).format("D MMMM YYYY")} &nbsp;
                 {showData?.startTime} at{" "}
                 {showData?.theater.name +
                   ", " +
@@ -80,10 +80,10 @@ const Header = ({ showData, type }) => {
             <div className="mx-auto px-6 pb-4 flex items-center gap-4 max-w-7xl">
               <div className="text-sm text-gray-700">
                 <p className="text-xs text-gray-500 font-medium">
-                  {dayjs(showData?.date, "DD-MM-YYYY").format("ddd")}
+                  {dayjs(showData?.date).format("ddd")}
                 </p>
                 <p className="text-sm font-semibold text-gray-700">
-                  {dayjs(showData?.date, "DD-MM-YYYY").format("DD MMMM")}
+                  {dayjs(showData?.date).format("DD MMMM")}
                 </p>
               </div>
 

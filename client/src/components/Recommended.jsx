@@ -54,14 +54,14 @@ const Recommended = () => {
                 <img
                   src={movie.posterUrl}
                   alt={movie.title}
-                  className="w-full h-[300px] object-cover rounded"
+                  className="w-full aspect-[2/3] object-cover rounded"
                 />
               </div>
               <div
                 className="bg-black text-white text-sm px-2 py-1 flex items-center
               justify-between "
               >
-                <span>⭐ {movie.rating}/10</span>
+                <span>⭐ {movie.rating?.toFixed(1)}/10</span>
                 <span>{movie.votes} Votes</span>
               </div>
               <div className="px-2 py-1">

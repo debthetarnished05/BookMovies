@@ -1,77 +1,104 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StarIcon, CheckIcon } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { axiosWrapper } from "../../apis/axiosWrapper";
 
 function AddMovies() {
-  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedMovies, setSelectedMovies] = useState([]);
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
 
-  // Temporary hardcoded movies
-  const movies = [
-    {
-      id: 1,
-      title: "Deadpool & Wolverine",
-      image:
-        "https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      title: "Inside Out 2",
-      image:
-        "https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg",
-      rating: 4.7,
-    },
-    {
-      id: 3,
-      title: "Spider-Man: Across the Spider-Verse",
-      image:
-        "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg",
-      rating: 4.8,
-    },
-    {
-      id: 4,
-      title: "Wonder Woman 1984",
-      image:
-        "https://image.tmdb.org/t/p/w500/8UlWHLMpgZm9bx6QYh0NFoq67TZ.jpg",
-      rating: 4.6,
-    },
-    {
-      id: 5,
-      title: "Guardians of the Galaxy Vol. 3",
-      image:
-        "https://image.tmdb.org/t/p/w500/r2J02Z2OpNTctfOSN1Ydgii51I3.jpg",
-      rating: 4.4,
-    },
-  ];
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const res = await axiosWrapper.get(`/admin/getmovies`);
+        if (res.data.success) {
+          setMovies(res.data.movies);
+        }
+      } catch (error) {
+        toast.error("Failed to fetch movies from TMDB");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
 
   const handleSelectMovie = (movie) => {
-    setSelectedMovie(movie);
+    if (selectedMovies.find(m => m.id === movie.id)) {
+      setSelectedMovies(selectedMovies.filter(m => m.id !== movie.id));
+    } else {
+      setSelectedMovies([...selectedMovies, movie]);
+    }
   };
 
-  const handleAddMovie = () => {
-    if (!selectedMovie) return;
+  const handleAddMovie = async () => {
+    if (selectedMovies.length === 0) return;
 
-    console.log("Selected movie:", selectedMovie);
+    try {
+      setAdding(true);
+      let successCount = 0;
+      let conflictCount = 0;
 
-    alert(`${selectedMovie.title} selected`);
+      await Promise.all(
+        selectedMovies.map(async (selectedMovie) => {
+          try {
+            const res = await axiosWrapper.post(`/admin/addmovie`, {
+              movieId: selectedMovie.id
+            });
+            if (res.data.success) {
+              successCount++;
+            }
+          } catch (error) {
+            if (error.response && error.response.status === 409) {
+              conflictCount++;
+            } else {
+              console.error(error);
+            }
+          }
+        })
+      );
+
+      if (successCount > 0) {
+        toast.success(`Successfully added ${successCount} movie(s)!`);
+      }
+      if (conflictCount > 0) {
+        toast.error(`${conflictCount} movie(s) already exist in database.`);
+      }
+
+      setSelectedMovies([]);
+    } catch (error) {
+      toast.error("An error occurred while adding movies.");
+      console.error(error);
+    } finally {
+      setAdding(false);
+    }
   };
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading now playing movies...</div>;
+  }
 
   return (
     <div className="w-full min-h-screen px-6 py-8">
       {/* Heading */}
       <div className="mb-8">
         <h1 className="text-3xl font-semibold text-gray-800">
-          Add Movies
+          Add TMDB Movies
         </h1>
 
         <p className="mt-2 text-gray-500">
-          Select a movie to add it to your theatre.
+          Select a movie from TMDB to add it to the database.
         </p>
       </div>
 
       {/* Movies */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
         {movies.map((movie) => {
-          const isSelected = selectedMovie?.id === movie.id;
+          const isSelected = selectedMovies.some(m => m.id === movie.id);
+          const image = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "https://via.placeholder.com/500x750?text=No+Image";
 
           return (
             <div
@@ -101,11 +128,11 @@ function AddMovies() {
 
               {/* Poster */}
               <img
-                src={movie.image}
+                src={image}
                 alt={movie.title}
                 className={`
                   w-full
-                  h-72
+                  aspect-[2/3]
                   object-cover
                   transition-all
                   duration-200
@@ -150,7 +177,7 @@ function AddMovies() {
                       `}
                     />
 
-                    {movie.rating}
+                    {movie.vote_average?.toFixed(1)}
                   </span>
 
                   {isSelected && (
@@ -169,7 +196,7 @@ function AddMovies() {
       <div className="flex justify-center mt-10 pb-8">
         <button
           onClick={handleAddMovie}
-          disabled={!selectedMovie}
+          disabled={selectedMovies.length === 0 || adding}
           className={`
             px-8
             py-3
@@ -179,15 +206,15 @@ function AddMovies() {
             transition-all
             duration-200
             ${
-              selectedMovie
+              selectedMovies.length > 0 && !adding
                 ? "bg-red-500 text-white hover:bg-red-600 cursor-pointer shadow-md"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }
           `}
         >
-          {selectedMovie
-            ? `Add "${selectedMovie.title}"`
-            : "Add this Movie"}
+          {adding ? 'Adding...' : selectedMovies.length > 0
+            ? `Add ${selectedMovies.length} Movie(s)`
+            : "Select Movies to Add"}
         </button>
       </div>
     </div>

@@ -224,7 +224,7 @@ const Checkout = () => {
             {/* Show Details */}
             <div className="border border-gray-200 rounded-[24px] px-6 py-5">
               <p className="text-md font-medium border-b pb-5 border-gray-200">
-                {dayjs(showData?.date, "DD-MM-YYYY")
+                {dayjs(showData?.date)
                   .format("D MMMM YYYY")
                   .split(" ")
                   .slice(0, 2)

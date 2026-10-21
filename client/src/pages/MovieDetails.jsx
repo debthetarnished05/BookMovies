@@ -63,7 +63,7 @@ const MovieDetails = () => {
             <div className="flex items-center gap-4 mb-3">
               <div className="bg-[#3a3a3a] px-4 py-2 rounded-md flex items-center gap-2 text-sm">
                 <span className="text-pink-500 font-bold">
-                  ★ {movie?.data.movie.rating}
+                  ★ {movie?.data.movie.rating?.toFixed(1)}
                 </span>
                 <span className="text-gray-300">{movie?.data.movie.votes} Votes</span>
                 <button className="cursor-pointer bg-[#2f2f2f] ml-6 px-4 py-2 rounded-md  hove:bg-[#4a4a4a]">

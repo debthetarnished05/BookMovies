@@ -16,7 +16,7 @@ const MovieCard = ({movie}) => {
 
   return (
     <div onClick={() =>handleNavigate(movie)} className='w-40 md:w-52 cursor-pointer'>
-        <img src={movie.posterUrl} alt={movie.title} className='rounded-lg shadow-md' />
+        <img src={movie.posterUrl} alt={movie.title} className='w-full aspect-[2/3] object-cover rounded-lg shadow-md' />
         <p className='mt-2 font-medium'>{movie.title}</p>
         <div className="flex items-center gap-2 text-sm">
   <span className="text-red-500 text-lg">★</span>

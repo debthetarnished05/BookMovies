@@ -4,11 +4,14 @@ import { IoIosLogOut, IoMdAdd } from "react-icons/io";
 import { FiEdit } from "react-icons/fi";
 import BookingHistory from "../components/profile/BookingHistory";
 import { useAuth } from "../context/AuthContext";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { axiosWrapper } from "../apis/axiosWrapper";
+import { toast } from "react-hot-toast";
 
 const Profile = () => {
 
   const { tab } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState("profile");
 
   useEffect(() => {
@@ -56,9 +59,16 @@ const Profile = () => {
                 </div>
                 <div className="mt-2">
                   <h2 className="text-2xl font-bold">Hi, {user?.name}</h2>
-                  <small onClick={handleLogout} className="underline cursor-pointer">
-                    <IoIosLogOut size={20} className="inline" /> Logout
-                  </small>
+                  <div className="flex items-center gap-4 mt-1">
+                    <small onClick={handleLogout} className="underline cursor-pointer">
+                      <IoIosLogOut size={20} className="inline" /> Logout
+                    </small>
+                    {(user?.role === "admin" || user?.role === "superadmin") && (
+                      <small onClick={() => navigate("/admin")} className="underline cursor-pointer">
+                        Go to Dashboard
+                      </small>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -146,6 +156,44 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Request Admin Access */}
+              {user?.role === 'user' && (
+                <div className="bg-white p-6 mt-4 rounded-md">
+                  <h3 className="text-lg font-semibold mb-4">Request Admin Access</h3>
+                  <div className="flex flex-col gap-2 max-w-sm">
+                    <p className="text-sm text-gray-600 mb-2">Want to become an admin? Enter your password to request access.</p>
+                    <input
+                      type="password"
+                      placeholder="Your Password"
+                      id="adminReqPassword"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 mb-2"
+                    />
+                    <button 
+                      onClick={async () => {
+                        const pwd = document.getElementById("adminReqPassword").value;
+                        if (!pwd) {
+                          toast.error("Please enter your password");
+                          return;
+                        }
+                        try {
+                          const res = await axiosWrapper.post(`/admin/request-access`, {
+                            email: user.email,
+                            password: pwd
+                          });
+                          toast.success("Admin access requested successfully!");
+                          document.getElementById("adminReqPassword").value = "";
+                        } catch (err) {
+                          toast.error(err.response?.data?.message || err.message || "Failed to request admin access");
+                        }
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
+                    >
+                      Request Access
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 

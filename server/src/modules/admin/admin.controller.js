@@ -13,7 +13,7 @@ import{generateSeatLayout} from "../../utils/index.js";
 
 export const requestAdminAccess = async (req, res, next) =>{
   try {
-    const userId = req.params.id;
+    const userId = req.user._id;
     const {email,password} = req.body;
 
     if (!email || !password){
@@ -304,10 +304,12 @@ export const createShow = async (req, res, next) => {
       audioType,
       startTime,
       date,
+      startDate,
+      endDate,
       priceMap,
-      seatLayout,
-      adminId,
     } = req.body;
+
+    const adminId = req.user._id;
 
     // Validate required fields
     if (
@@ -315,8 +317,7 @@ export const createShow = async (req, res, next) => {
       !theaterId ||
       !format ||
       !startTime ||
-      !date ||
-      !adminId
+      !(date || (startDate && endDate))
     ) {
       return res.status(400).json({
         success: false,
@@ -326,7 +327,6 @@ export const createShow = async (req, res, next) => {
 
     // Check whether movie exists
     const movie = await MovieModel.findById(movieId);
-
     if (!movie) {
       return res.status(404).json({
         success: false,
@@ -336,7 +336,6 @@ export const createShow = async (req, res, next) => {
 
     // Check whether theater exists
     const theater = await TheaterModel.findById(theaterId);
-
     if (!theater) {
       return res.status(404).json({
         success: false,
@@ -344,34 +343,37 @@ export const createShow = async (req, res, next) => {
       });
     }
 
-    // Create show
-    const show = await ShowModel.create({
+    let datesToCreate = [];
+    if (startDate && endDate) {
+      let current = new Date(startDate);
+      const end = new Date(endDate);
+      while (current <= end) {
+        datesToCreate.push(current.toISOString().split('T')[0]); // YYYY-MM-DD
+        current.setDate(current.getDate() + 1);
+      }
+    } else {
+      datesToCreate.push(date);
+    }
+
+    const showsToInsert = datesToCreate.map(d => ({
       movie: movie._id,
       theater: theater._id,
-
-      // Get location from theater
       location: theater.state,
-
       format,
-
       audioType: audioType || "Dolby Atmos",
-
       startTime,
-
-      date,
-
+      date: d,
       priceMap: priceMap || {},
-
-      seatLayout: generateSeatLayout(),
-
-      // Temporarily from body for testing
+      seatLayout: generateSeatLayout(priceMap),
       adminId,
-    });
+    }));
+
+    const shows = await ShowModel.insertMany(showsToInsert);
 
     return res.status(201).json({
       success: true,
-      message: "Show created successfully",
-      show,
+      message: `Successfully created ${shows.length} show(s)`,
+      shows,
     });
 
   } catch (error) {
@@ -384,7 +386,7 @@ export const getShowsByMovie = async (req, res, next) => {
   try {
     const { movieId } = req.params;
 
-    const adminId = "6a8a8ed2d359adaf2309125b";
+    const adminId = req.user._id;
 
     // Get shows for this movie created by this admin
     const shows = await ShowModel.find({
@@ -471,9 +473,7 @@ export const getShowsByMovie = async (req, res, next) => {
 
 export const getActiveShows = async (req, res, next) => {
   try {
-    const adminId = new mongoose.Types.ObjectId(
-      "6a8a8ed2d359adaf2309125b"
-    );
+    const adminId = req.user._id;
 
     const movies = await ShowModel.aggregate([
       {
@@ -524,9 +524,7 @@ export const getActiveShows = async (req, res, next) => {
 
 export const getTotalRevenue = async (req, res, next) => {
   try {
-    const adminId = new mongoose.Types.ObjectId(
-      adminId = req.user._id
-    );
+    const adminId = req.user._id;
 
     const result = await BookingModel.aggregate([
       // Find the show associated with each booking
@@ -559,22 +557,38 @@ export const getTotalRevenue = async (req, res, next) => {
           totalRevenue: {
             $sum: "$bookingFee.total",
           },
+          totalBookings: {
+            $sum: { $size: { $ifNull: ["$seats", []] } },
+          },
+          uniqueUsers: {
+            $addToSet: "$userId",
+          },
+        },
+      },
+      {
+        $project: {
+          totalRevenue: 1,
+          totalBookings: 1,
+          totalUsers: { $size: "$uniqueUsers" },
         },
       },
     ]);
 
     const totalRevenue = result[0]?.totalRevenue || 0;
+    const totalBookings = result[0]?.totalBookings || 0;
+    const totalUsers = result[0]?.totalUsers || 0;
 
     return res.status(200).json({
       success: true,
       totalRevenue,
+      totalBookings,
+      totalUsers,
     });
 
   } catch (error) {
     next(error);
   }
 };
-
 
 
 
@@ -607,6 +621,93 @@ export const getBookings = async (req, res, next) => {
 };
 
 
+import { UserModel } from "../user/user.model.js";
 
+export const getSuperAdminStats = async (req, res, next) => {
+  try {
+    const totalUsers = await UserModel.countDocuments({ role: "user" });
+    const totalAdmins = await UserModel.countDocuments({ role: "admin" });
+    const totalShows = await ShowModel.countDocuments();
+    const activeMovies = await MovieModel.find({}, "title posterUrl");
 
+    res.status(200).json({
+      success: true,
+      totalUsers,
+      totalAdmins,
+      totalShows,
+      activeMovies,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
+export const getMovieShowsForSuperAdmin = async (req, res, next) => {
+  try {
+    const { movieId } = req.params;
+
+    // Get all shows for this movie across all admins
+    const shows = await ShowModel.find({
+      movie: movieId,
+    })
+      .populate("movie", "title posterUrl")
+      .populate("theater", "name city state")
+      .populate("adminId", "name email")
+      .sort({ date: 1, startTime: 1 });
+
+    const showIds = shows.map((show) => show._id);
+
+    // Get booked seats for these shows
+    const bookingData = await BookingModel.aggregate([
+      {
+        $match: {
+          showId: { $in: showIds },
+          status: "CONFIRMED",
+        },
+      },
+      {
+        $group: {
+          _id: "$showId",
+          seatsBooked: {
+            $sum: {
+              $size: "$seats",
+            },
+          },
+        },
+      },
+    ]);
+
+    const bookingMap = {};
+    bookingData.forEach((item) => {
+      bookingMap[item._id.toString()] = {
+        seatsBooked: item.seatsBooked,
+      };
+    });
+
+    const result = shows.map((show) => {
+      const bookingInfo = bookingMap[show._id.toString()] || {
+        seatsBooked: 0,
+      };
+
+      return {
+        showId: show._id,
+        movieName: show.movie?.title,
+        moviePoster: show.movie?.posterUrl,
+        adminName: show.adminId?.name || "Unknown Admin",
+        theaterName: show.theater?.name,
+        theaterCity: show.theater?.city,
+        theaterState: show.theater?.state,
+        date: show.date,
+        startTime: show.startTime,
+        seatsBooked: bookingInfo.seatsBooked,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      shows: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

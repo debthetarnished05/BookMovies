@@ -46,7 +46,7 @@ const BookingHistory = () => {
               <img
                 src={booking.movieSnapshot.posterUrl}
                 alt={booking.movieSnapshot.title}
-                className="w-30 h-40 object-cover rounded"
+                className="w-[106px] aspect-[2/3] object-cover rounded"
               />
 
               <div className="h-40 border-l border-gray-300 border-dashed"></div>
@@ -62,7 +62,7 @@ const BookingHistory = () => {
                   </p>
 
                   <p className="text-sm font-semibold text-gray-700 mt-2">
-                    {dayjs(booking.showSnapshot.date, "DD-MM-YYYY").format("D MMM YY")}
+                    {dayjs(booking.showSnapshot.date).format("D MMM YY")}
                     {" - "}
                     {booking.showSnapshot.startTime}
                     {" • "}
